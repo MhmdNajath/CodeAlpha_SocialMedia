@@ -1,0 +1,210 @@
+<%- include('partials/header') %>
+
+    <% function timeAgo(dateStr) { const now=new Date(); const date=new Date(dateStr + 'Z' ); const
+        seconds=Math.floor((now - date) / 1000); if (seconds < 60) return 'just now' ; const minutes=Math.floor(seconds
+        / 60); if (minutes < 60) return minutes + 'm ago' ; const hours=Math.floor(minutes / 60); if (hours < 24) return
+        hours + 'h ago' ; const days=Math.floor(hours / 24); if (days < 7) return days + 'd ago' ; return
+        date.toLocaleDateString('en-US', { month: 'short' , day: 'numeric' }); } %>
+
+        <div class="profile-container">
+            <!-- Profile Header -->
+            <div class="profile-header glass-card">
+                <div class="profile-cover"
+                    style="<%- profileUser.cover_image ? `background: url('${profileUser.cover_image}') center / cover no-repeat;` : 'background: linear-gradient(135deg, #6c5ce7 0%, #a855f7 50%, #ec4899 100%);' %>">
+                </div>
+                <div class="profile-info-section">
+                    <div class="profile-avatar-wrapper">
+                        <img src="<%= profileUser.avatar %>" alt="<%= profileUser.username %>" class="profile-avatar"
+                            onerror="this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(profileUser.display_name || profileUser.username) %>&background=6c5ce7&color=fff&size=150'">
+                    </div>
+                    <div class="profile-details">
+                        <div class="profile-name-row">
+                            <div>
+                                <h1>
+                                    <%= profileUser.display_name || profileUser.username %>
+                                </h1>
+                                <span class="profile-username">@<%= profileUser.username %></span>
+                            </div>
+                            <% if (isOwnProfile) { %>
+                                <button class="btn btn-outline" onclick="openEditModal()"><i class="fas fa-edit"></i>
+                                    Edit Profile</button>
+                                <% } else { %>
+                                    <button
+                                        class="btn <%= isFollowing ? 'btn-outline following-btn' : 'btn-primary' %> follow-profile-btn"
+                                        onclick="toggleFollow(<%= profileUser.id %>, this)"
+                                        data-following="<%= isFollowing %>">
+                                        <%- isFollowing ? '<i class="fas fa-user-check"></i> Following'
+                                            : '<i class="fas fa-user-plus"></i> Follow' %>
+                                    </button>
+                                    <% } %>
+                        </div>
+                        <% if (profileUser.bio) { %>
+                            <p class="profile-bio">
+                                <%= profileUser.bio %>
+                            </p>
+                            <% } %>
+                                <div class="profile-meta">
+                                    <% if (profileUser.location) { %>
+                                        <span><i class="fas fa-map-marker-alt"></i>
+                                            <%= profileUser.location %>
+                                        </span>
+                                        <% } %>
+                                            <% if (profileUser.website) { %>
+                                                <span><a href="<%= profileUser.website %>" target="_blank"><i
+                                                            class="fas fa-link"></i> Website</a></span>
+                                                <% } %>
+                                                    <span><i class="fas fa-calendar"></i> Joined <%= new
+                                                            Date(profileUser.created_at).toLocaleDateString('en-US', {
+                                                            month: 'long' , year: 'numeric' }) %></span>
+                                </div>
+                                <div class="profile-stats">
+                                    <div class="stat">
+                                        <strong>
+                                            <%= postCount %>
+                                        </strong>
+                                        <span>Posts</span>
+                                    </div>
+                                    <div class="stat follower-stat"
+                                        onclick="showFollowers('<%= profileUser.username %>')">
+                                        <strong class="follower-count-display">
+                                            <%= followerCount %>
+                                        </strong>
+                                        <span>Followers</span>
+                                    </div>
+                                    <div class="stat" onclick="showFollowing('<%= profileUser.username %>')">
+                                        <strong>
+                                            <%= followingCount %>
+                                        </strong>
+                                        <span>Following</span>
+                                    </div>
+                                </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Posts -->
+            <div class="profile-posts">
+                <h2 class="section-title"><i class="fas fa-stream"></i> Posts</h2>
+                <% if (posts.length===0) { %>
+                    <div class="empty-state glass-card">
+                        <i class="fas fa-pen-fancy"></i>
+                        <h3>No posts yet</h3>
+                        <p>
+                            <%= isOwnProfile ? 'Share your first post!' : "This user hasn't posted anything yet." %>
+                        </p>
+                    </div>
+                    <% } %>
+
+                        <% posts.forEach(function(post) { %>
+                            <div class="post-card glass-card" id="post-<%= post.id %>">
+                                <div class="post-header">
+                                    <a href="/profile/<%= post.username %>" class="post-author">
+                                        <img src="<%= post.avatar %>" alt="<%= post.username %>" class="avatar-sm"
+                                            onerror="this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(post.display_name || post.username) %>&background=6c5ce7&color=fff'">
+                                        <div class="author-info">
+                                            <strong>
+                                                <%= post.display_name || post.username %>
+                                            </strong>
+                                            <span>@<%= post.username %> · <%= timeAgo(post.created_at) %></span>
+                                        </div>
+                                    </a>
+                                    <% if (post.user_id===currentUser.id) { %>
+                                        <button class="post-menu-btn" onclick="deletePost(<%= post.id %>)"><i
+                                                class="fas fa-trash-alt"></i></button>
+                                        <% } %>
+                                </div>
+                                <div class="post-content">
+                                    <p>
+                                        <%= post.content %>
+                                    </p>
+                                    <% if (post.image) { %>
+                                        <div class="post-image"><img src="<%= post.image %>" alt="Post image"
+                                                loading="lazy"></div>
+                                        <% } %>
+                                </div>
+                                <div class="post-actions">
+                                    <button class="action-btn like-btn <%= post.is_liked ? 'liked' : '' %>"
+                                        onclick="toggleLike(<%= post.id %>, this)">
+                                        <i class="fa<%= post.is_liked ? 's' : 'r' %> fa-heart"></i>
+                                        <span class="like-count">
+                                            <%= post.like_count %>
+                                        </span>
+                                    </button>
+                                    <button class="action-btn comment-btn" onclick="toggleComments(<%= post.id %>)">
+                                        <i class="far fa-comment"></i>
+                                        <span class="comment-count">
+                                            <%= post.comment_count %>
+                                        </span>
+                                    </button>
+                                </div>
+                                <div class="comments-section" id="comments-<%= post.id %>" style="display:none;">
+                                    <div class="comments-list" id="comments-list-<%= post.id %>"></div>
+                                    <form class="comment-form" onsubmit="addComment(event, <%= post.id %>)">
+                                        <input type="text" placeholder="Write a comment..." class="comment-input"
+                                            required>
+                                        <button type="submit" class="btn btn-sm"><i
+                                                class="fas fa-paper-plane"></i></button>
+                                    </form>
+                                </div>
+                            </div>
+                            <% }); %>
+            </div>
+        </div>
+
+        <% if (isOwnProfile) { %>
+            <!-- Edit Profile Modal -->
+            <div class="modal-overlay" id="editModal" style="display:none;">
+                <div class="modal glass-card">
+                    <div class="modal-header">
+                        <h2>Edit Profile</h2>
+                        <button class="modal-close" onclick="closeEditModal()">&times;</button>
+                    </div>
+                    <form action="/profile/update" method="POST" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label>Display Name</label>
+                            <input type="text" name="display_name" value="<%= profileUser.display_name || '' %>"
+                                placeholder="Your display name">
+                        </div>
+                        <div class="form-group">
+                            <label>Bio</label>
+                            <textarea name="bio" rows="3"
+                                placeholder="Write something about yourself..."><%= profileUser.bio || '' %></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Location</label>
+                            <input type="text" name="location" value="<%= profileUser.location || '' %>"
+                                placeholder="Where are you from?">
+                        </div>
+                        <div class="form-group">
+                            <label>Website</label>
+                            <input type="url" name="website" value="<%= profileUser.website || '' %>"
+                                placeholder="https://yourwebsite.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Profile Photo</label>
+                            <input type="file" name="avatar" accept="image/*">
+                        </div>
+                        <div class="form-group">
+                            <label>Cover Photo</label>
+                            <input type="file" name="cover_image" accept="image/*">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+            <% } %>
+
+                <!-- Followers/Following Modal -->
+                <div class="modal-overlay" id="userListModal" style="display:none;">
+                    <div class="modal glass-card">
+                        <div class="modal-header">
+                            <h2 id="userListTitle">Followers</h2>
+                            <button class="modal-close" onclick="closeUserListModal()">&times;</button>
+                        </div>
+                        <div class="user-list" id="userListContent">
+                            <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <%- include('partials/footer') %>

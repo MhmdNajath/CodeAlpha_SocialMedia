@@ -1,0 +1,8 @@
+node_modules/
+db/*.db
+db/sessions.db
+uploads/posts/*
+uploads/avatars/*
+!uploads/.gitkeep
+!uploads/posts/.gitkeep
+!uploads/avatars/.gitkeep

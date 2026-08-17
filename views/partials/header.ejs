@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Connect with friends and share your moments on our social media platform">
+    <title>
+        <%= title %> | Alpha
+    </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+</head>
+
+<body>
+    <% if (currentUser) { %>
+        <nav class="navbar">
+            <div class="nav-container">
+                <a href="/feed" class="nav-brand">
+                    <i class="fas fa-infinity"></i>
+                    <span>α.Social</span>
+                </a>
+                <div class="nav-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search people..." id="searchInput" autocomplete="off">
+                    <div class="search-results" id="searchResults"></div>
+                </div>
+                <div class="nav-links">
+                    <a href="/feed" class="nav-link" title="Home"><i class="fas fa-home"></i></a>
+                    <a href="/explore" class="nav-link" title="Explore"><i class="fas fa-compass"></i></a>
+                    <button id="themeToggle" class="nav-link" title="Toggle Theme"
+                        style="border:none; background:none; cursor:pointer;">
+                        <i class="fas fa-sun"></i>
+                    </button>
+                    <a href="/profile/<%= currentUser.username %>" class="nav-link nav-avatar" title="Profile">
+                        <img src="<%= currentUser.avatar %>" alt="avatar"
+                            onerror="this.src='https://ui-avatars.com/api/?name=<%= currentUser.display_name || currentUser.username %>&background=6c5ce7&color=fff'">
+                    </a>
+                    <a href="/logout" class="nav-link nav-logout" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
+                </div>
+                <button class="nav-toggle" id="navToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </nav>
+        <% } %>
+
+            <% if (flash) { %>
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: '<%= flash.type %>',
+                                title: '<%= flash.message %>',
+                                showConfirmButton: true,
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#6c5ce7',
+                                timer: 4000,
+                                timerProgressBar: true,
+                                background: 'var(--bg-secondary)',
+                                color: 'var(--text-primary)'
+                            });
+                        }
+                    });
+                </script>
+                <% } %>
+
+                    <main class="<%= currentUser ? 'main-content' : 'auth-content' %>">

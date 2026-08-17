@@ -1,0 +1,132 @@
+<%- include('partials/header') %>
+
+    <% function timeAgo(dateStr) { const now=new Date(); const date=new Date(dateStr + 'Z' ); const
+        seconds=Math.floor((now - date) / 1000); if (seconds < 60) return 'just now' ; const minutes=Math.floor(seconds
+        / 60); if (minutes < 60) return minutes + 'm ago' ; const hours=Math.floor(minutes / 60); if (hours < 24) return
+        hours + 'h ago' ; const days=Math.floor(hours / 24); if (days < 7) return days + 'd ago' ; return
+        date.toLocaleDateString('en-US', { month: 'short' , day: 'numeric' }); } %>
+
+        <div class="feed-container">
+            <div class="feed-main">
+                <!-- Create Post -->
+                <div class="create-post-card glass-card">
+                    <form action="/posts" method="POST" enctype="multipart/form-data" class="create-post-form">
+                        <div class="create-post-header">
+                            <img src="<%= currentUser.avatar %>" alt="avatar" class="avatar-sm"
+                                onerror="this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(currentUser.display_name || currentUser.username) %>&background=6c5ce7&color=fff'">
+                            <textarea name="content"
+                                placeholder="What's on your mind, <%= currentUser.display_name || currentUser.username %>?"
+                                rows="3" required></textarea>
+                        </div>
+                        <div class="create-post-actions">
+                            <label class="upload-btn">
+                                <i class="fas fa-image"></i> Photo
+                                <input type="file" name="image" accept="image/*" hidden>
+                            </label>
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fas fa-paper-plane"></i> Post
+                            </button>
+                        </div>
+                        <div class="image-preview" id="imagePreview" style="display:none;">
+                            <img id="previewImg" src="" alt="Preview">
+                            <button type="button" class="remove-preview" onclick="removePreview()">&times;</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Posts Feed -->
+                <% if (posts.length===0) { %>
+                    <div class="empty-state glass-card">
+                        <i class="fas fa-rss"></i>
+                        <h3>Your feed is empty</h3>
+                        <p>Follow people or create your first post to get started!</p>
+                    </div>
+                    <% } %>
+
+                        <% posts.forEach(function(post) { %>
+                            <div class="post-card glass-card" id="post-<%= post.id %>">
+                                <div class="post-header">
+                                    <a href="/profile/<%= post.username %>" class="post-author">
+                                        <img src="<%= post.avatar %>" alt="<%= post.username %>" class="avatar-sm"
+                                            onerror="this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(post.display_name || post.username) %>&background=6c5ce7&color=fff'">
+                                        <div class="author-info">
+                                            <strong>
+                                                <%= post.display_name || post.username %>
+                                            </strong>
+                                            <span>@<%= post.username %> · <%= timeAgo(post.created_at) %></span>
+                                        </div>
+                                    </a>
+                                    <% if (post.user_id===currentUser.id) { %>
+                                        <button class="post-menu-btn" onclick="deletePost(<%= post.id %>)"><i
+                                                class="fas fa-trash-alt"></i></button>
+                                        <% } %>
+                                </div>
+                                <div class="post-content">
+                                    <p>
+                                        <%= post.content %>
+                                    </p>
+                                    <% if (post.image) { %>
+                                        <div class="post-image"><img src="<%= post.image %>" alt="Post image"
+                                                loading="lazy"></div>
+                                        <% } %>
+                                </div>
+                                <div class="post-actions">
+                                    <button class="action-btn like-btn <%= post.is_liked ? 'liked' : '' %>"
+                                        onclick="toggleLike(<%= post.id %>, this)">
+                                        <i class="fa<%= post.is_liked ? 's' : 'r' %> fa-heart"></i>
+                                        <span class="like-count">
+                                            <%= post.like_count %>
+                                        </span>
+                                    </button>
+                                    <button class="action-btn comment-btn" onclick="toggleComments(<%= post.id %>)">
+                                        <i class="far fa-comment"></i>
+                                        <span class="comment-count">
+                                            <%= post.comment_count %>
+                                        </span>
+                                    </button>
+                                </div>
+                                <div class="comments-section" id="comments-<%= post.id %>" style="display:none;">
+                                    <div class="comments-list" id="comments-list-<%= post.id %>"></div>
+                                    <form class="comment-form" onsubmit="addComment(event, <%= post.id %>)">
+                                        <input type="text" placeholder="Write a comment..." class="comment-input"
+                                            required>
+                                        <button type="submit" class="btn btn-sm"><i
+                                                class="fas fa-paper-plane"></i></button>
+                                    </form>
+                                </div>
+                            </div>
+                            <% }); %>
+            </div>
+
+            <!-- Sidebar -->
+            <aside class="feed-sidebar">
+                <div class="sidebar-card glass-card">
+                    <h3><i class="fas fa-user-plus"></i> Suggested for you</h3>
+                    <% if (suggestedUsers.length===0) { %>
+                        <p class="text-muted">You're following everyone! 🎉</p>
+                        <% } %>
+                            <% suggestedUsers.forEach(function(user) { %>
+                                <div class="suggested-user">
+                                    <a href="/profile/<%= user.username %>" class="suggested-user-info">
+                                        <img src="<%= user.avatar %>" alt="<%= user.username %>" class="avatar-xs"
+                                            onerror="this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(user.display_name || user.username) %>&background=6c5ce7&color=fff'">
+                                        <div>
+                                            <strong>
+                                                <%= user.display_name || user.username %>
+                                            </strong>
+                                            <span>@<%= user.username %></span>
+                                        </div>
+                                    </a>
+                                    <button class="btn btn-outline btn-xs follow-btn"
+                                        onclick="toggleFollow(<%= user.id %>, this)">Follow</button>
+                                </div>
+                                <% }); %>
+                </div>
+                <div class="sidebar-card glass-card sidebar-footer">
+                    <p>Connecta &copy; 2024</p>
+                    <p>Built with <i class="fas fa-heart" style="color: #e74c3c;"></i> using Express.js</p>
+                </div>
+            </aside>
+        </div>
+
+        <%- include('partials/footer') %>
